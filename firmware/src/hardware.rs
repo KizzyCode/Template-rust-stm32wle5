@@ -4,25 +4,14 @@ use core::mem;
 use cortex_m::{delay::Delay, Peripherals as CorePeripherals};
 use stm32wlxx_hal::{pac::Peripherals, util};
 
-/// A flash page
-#[repr(align(2048))]
-#[derive(Debug, Clone, Copy)]
-pub struct FlashPage {
-    /// The flash bytes
-    pub bytes: [u8; 2048],
-}
-impl FlashPage {
-    /// Creates a new all-`0xFF` flash page
-    pub const fn new() -> Self {
-        Self { bytes: [0xFF; 2048] }
-    }
-}
-/// Assert that the flash page has the correct size
-const _FLASHPAGE_ASSERT_SIZE: () = assert!(mem::size_of::<FlashPage>() == 2048, "Invalid size of flash page");
 /// The userdata pages
 #[link_section = ".userdata"]
 #[allow(unused)]
-pub static USERDATA: [FlashPage; 4] = [FlashPage::new(); 4];
+pub static USERDATA: [u64; 1024] = [u64::MAX; 1024];
+/// Assert that the flash page has the correct size
+const _USERDATA_ASSERT_SIZE: () = assert!(mem::size_of::<[u64; 1024]>() == 8192, "Invalid size of userdata");
+/// Assert that the flash page has the correct alignment
+const _USERDATA_ASSERT_ALIGN: () = assert!(mem::align_of::<[u64; 1024]>() == 8, "Invalid alignment of userdata");
 
 /// A hardware handle
 pub struct Hardware {
