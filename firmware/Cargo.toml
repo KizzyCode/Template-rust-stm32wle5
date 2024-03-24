@@ -1,0 +1,40 @@
+[package]
+name = "playground"
+version = "0.1.0"
+edition = "2021"
+resolver = "2"
+authors = ["KizzyCode Software Labs./Keziah Biermann <development@kizzycode.de>"]
+keywords = []
+categories = []
+description = "Pure Rust stm32wle5 playground"
+license = "BSD-2-Clause OR MIT"
+readme = "README.md"
+
+
+[[bin]]
+name = "firmware"
+path = "src/main.rs"
+
+
+[features]
+default = []
+
+
+[dependencies]
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.3"
+stm32wlxx-hal = { version = "0.6.1", features = ["stm32wle5", "rt"] }
+
+
+[profile.dev]
+overflow-checks = true
+opt-level = "z"
+lto = true
+debug = 2
+
+[profile.release]
+overflow-checks = true
+opt-level = "z"
+strip = "symbols"
+lto = true
+debug = 0

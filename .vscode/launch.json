@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "cortex-debug",
+      "request": "launch",
+      "name": "remote-openocd",
+      "servertype": "external",
+      "cwd": "${workspaceRoot}",
+      "preLaunchTask": "${defaultBuildTask}",
+      "executable": "${workspaceFolder}/target/thumbv7em-none-eabi/debug/firmware",
+      "gdbPath": "arm-none-eabi-gdb",
+      "device": "stm32wlx",
+      "gdbTarget": "debugsrv.keziah.de:3333",
+      "svdFile": "${workspaceRoot}/.vscode/stm32wle5.svd",
+      "runToEntryPoint": "main",
+      "postRestartCommands": [
+        "break main",
+        "continue"
+      ],
+      "presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+			}
+    },
+  ]
+}

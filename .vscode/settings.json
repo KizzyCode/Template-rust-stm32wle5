@@ -1,0 +1,8 @@
+{
+    "[rust]": {
+        "editor.formatOnSave": true
+    },
+    "rust-analyzer.cargo.target": "thumbv7em-none-eabi",
+    "rust-analyzer.check.allTargets": false,
+    "cortex-debug.variableUseNaturalFormat": false
+}
