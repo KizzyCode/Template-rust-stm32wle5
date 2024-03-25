@@ -47,13 +47,13 @@ impl<const SIZE: usize> Write for PanicBuffer<SIZE> {
         // Copy the string using a volatile write to ensure this is not optimized away
         let mut dest = message.as_mut_ptr();
         for source in str_.bytes().take(to_copy) {
+            // Volatile write and increment target pointer
             unsafe { dest.write_volatile(source) };
             unsafe { dest = dest.add(1) };
         }
         Ok(())
     }
 }
-
 /// The static panic buffers for each core
 #[no_mangle]
 #[doc(hidden)]
@@ -66,26 +66,28 @@ fn panic(info: &PanicInfo) -> ! {
     // Write the panic info into the buffer
     let buffer = unsafe { &mut *addr_of_mut!(PANIC_BUFFER) };
     let _write_ok = write!(buffer, "{info}").is_ok();
-    hint::black_box(buffer);
 
-    // Trigger a breakpoint and raise a fatal exception
+    // Trigger a breakpoint, ensure `buffer` is not optimized away and raise a fatal exception
     asm::bkpt();
+    hint::black_box(buffer);
     asm::udf();
 }
-
+/// Exception handler for uncaught interrupts (useful for debugging, can be overridden to e.g. reboot)
 #[stm32wlxx_hal::cortex_m_rt::exception]
 #[allow(non_snake_case)]
 unsafe fn DefaultHandler(irqn: i16) {
     loop {
+        // Trigger breakpoint and ensure `irqn` is not optimized away
         asm::bkpt();
         hint::black_box(irqn);
     }
 }
-
+/// Exception handler if hard fault occurs (useful for debugging, can be overridden to e.g. reboot)
 #[stm32wlxx_hal::cortex_m_rt::exception]
 #[allow(non_snake_case)]
 unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
     loop {
+        // Trigger breakpoint and ensure `ef` is not optimized away
         asm::bkpt();
         hint::black_box(ef);
     }
