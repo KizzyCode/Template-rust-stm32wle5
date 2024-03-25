@@ -9,7 +9,7 @@ use core::{
 use cortex_m::asm;
 use cortex_m_rt::ExceptionFrame;
 
-/// A static buffer to hold a formatted panic message
+/// A static buffer to hold a formatted panic message; can be used for interactive debugging or )
 #[doc(hidden)]
 pub struct PanicBuffer<const SIZE: usize> {
     /// The panic message
@@ -27,16 +27,16 @@ impl<const SIZE: usize> Write for PanicBuffer<SIZE> {
     #[inline(never)]
     fn write_str(&mut self, str_: &str) -> fmt::Result {
         // Get the target subbuffer
-        let message = &mut self.message[self.len..];
-        let to_copy = core::cmp::min(str_.len(), message.len());
+        let buf = &mut self.message[self.len..];
+        let to_copy = core::cmp::min(str_.len(), buf.len());
         self.len += to_copy;
 
-        // Copy the string using a volatile write to ensure this is not optimized away
-        let mut dest = message.as_mut_ptr();
-        for source in str_.bytes().take(to_copy) {
+        // Use a volatile copy to ensure the message is always written into the static memory
+        let mut buf = buf.as_mut_ptr();
+        for byte in str_.bytes().take(to_copy) {
             // Volatile write and increment target pointer
-            unsafe { dest.write_volatile(source) };
-            unsafe { dest = dest.add(1) };
+            unsafe { buf.write_volatile(byte) };
+            unsafe { buf = buf.add(1) };
         }
         Ok(())
     }
@@ -54,28 +54,26 @@ fn panic(info: &PanicInfo) -> ! {
     let buffer = unsafe { &mut *addr_of_mut!(PANIC_BUFFER) };
     let _write_ok = write!(buffer, "{info}").is_ok();
 
-    // Trigger a breakpoint, ensure `buffer` is not optimized away and raise a fatal exception
+    // Trigger debug breakpoint, try to ensure `buffer` is not optimized away, and raise a fatal exception
     asm::bkpt();
     hint::black_box(buffer);
     asm::udf();
 }
-/// Exception handler for uncaught interrupts (useful for debugging, can be overridden to e.g. reboot)
+/// Exception handler for uncaught interrupts
 #[stm32wlxx_hal::cortex_m_rt::exception]
 #[allow(non_snake_case)]
 unsafe fn DefaultHandler(irqn: i16) {
-    loop {
-        // Trigger breakpoint and ensure `irqn` is not optimized away
-        asm::bkpt();
-        hint::black_box(irqn);
-    }
+    // Trigger debug breakpoint and try to ensure `irqn` is not optimized away
+    asm::bkpt();
+    hint::black_box(irqn);
+    asm::udf();
 }
-/// Exception handler if hard fault occurs (useful for debugging, can be overridden to e.g. reboot)
+/// Exception handler if hard fault occurs
 #[stm32wlxx_hal::cortex_m_rt::exception]
 #[allow(non_snake_case)]
 unsafe fn HardFault(ef: &ExceptionFrame) -> ! {
-    loop {
-        // Trigger breakpoint and ensure `ef` is not optimized away
-        asm::bkpt();
-        hint::black_box(ef);
-    }
+    // Trigger debug breakpoint and try to ensure `ef` is not optimized away
+    asm::bkpt();
+    hint::black_box(ef);
+    asm::udf();
 }
