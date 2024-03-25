@@ -1,7 +1,7 @@
 //! Implements the panic handler
 
 use core::{
-    fmt::{self, Display, Formatter, Write},
+    fmt::{self, Write},
     hint,
     panic::PanicInfo,
     ptr::addr_of_mut,
@@ -21,19 +21,6 @@ impl<const SIZE: usize> PanicBuffer<SIZE> {
     /// Creates a new empty panic buffer
     pub const fn new() -> Self {
         Self { message: [0; SIZE], len: 0 }
-    }
-}
-impl<const SIZE: usize> Display for PanicBuffer<SIZE> {
-    fn fmt(&self, f: &mut Formatter) -> core::fmt::Result {
-        // Write the message
-        for byte in self.message.iter().take(self.len) {
-            // Escape the byte if necessary
-            match byte.is_ascii_graphic() | byte.is_ascii_whitespace() {
-                true => write!(f, "{}", *byte as char)?,
-                false => write!(f, r#"\x{:02x}"#, byte)?,
-            };
-        }
-        Ok(())
     }
 }
 impl<const SIZE: usize> Write for PanicBuffer<SIZE> {
